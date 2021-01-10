@@ -5,9 +5,8 @@ import { Route, Switch } from 'react-router-dom';
 import { NProgress } from '@tanem/react-nprogress';
 import { CSSTransition } from 'react-transition-group';
 import { connect } from 'react-redux';
-import { ViewerbaseDragDropContext } from '@ohif/ui';
+import { ViewerbaseDragDropContext, ErrorBoundary, asyncComponent, retryImport } from '@ohif/ui';
 import { SignoutCallbackComponent } from 'redux-oidc';
-import asyncComponent from './components/AsyncComponent.js';
 import * as RoutesUtil from './routes/routesUtil';
 
 import NotFound from './routes/NotFound.js';
@@ -18,7 +17,7 @@ import './theme-tide.css';
 // Contexts
 import AppContext from './context/AppContext';
 const CallbackPage = asyncComponent(() =>
-  import(/* webpackChunkName: "CallbackPage" */ './routes/CallbackPage.js')
+  retryImport(() => import(/* webpackChunkName: "CallbackPage" */ './routes/CallbackPage.js'))
 );
 
 class OHIFStandaloneViewer extends Component {
@@ -52,10 +51,13 @@ class OHIFStandaloneViewer extends Component {
     const { appConfig = {} } = this.context;
     const userNotLoggedIn = userManager && (!user || user.expired);
     if (userNotLoggedIn) {
-      const pathname = this.props.location.pathname;
+      const { pathname, search } = this.props.location;
 
       if (pathname !== '/callback') {
-        sessionStorage.setItem('ohif-redirect-to', pathname);
+        sessionStorage.setItem(
+          'ohif-redirect-to',
+          JSON.stringify({ pathname, search })
+        );
       }
 
       return (
@@ -103,12 +105,21 @@ class OHIFStandaloneViewer extends Component {
 
               userManager.removeUser().then(() => {
                 if (targetLinkUri !== null) {
+                  const ohifRedirectTo = {
+                    pathname: new URL(targetLinkUri).pathname,
+                  };
                   sessionStorage.setItem(
                     'ohif-redirect-to',
-                    new URL(targetLinkUri).pathname
+                    JSON.stringify(ohifRedirectTo)
                   );
                 } else {
-                  sessionStorage.setItem('ohif-redirect-to', '/');
+                  const ohifRedirectTo = {
+                    pathname: '/',
+                  };
+                  sessionStorage.setItem(
+                    'ohif-redirect-to',
+                    JSON.stringify(ohifRedirectTo)
+                  );
                 }
 
                 if (loginHint !== null) {
@@ -191,8 +202,10 @@ class OHIFStandaloneViewer extends Component {
                   {match === null ? (
                     <></>
                   ) : (
-                    <Component match={match} location={this.props.location} />
-                  )}
+                      <ErrorBoundary context={match.url}>
+                        <Component match={match} location={this.props.location} />
+                      </ErrorBoundary>
+                    )}
                 </CSSTransition>
               )}
             </Route>

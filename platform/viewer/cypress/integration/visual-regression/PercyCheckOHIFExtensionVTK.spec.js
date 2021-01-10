@@ -1,3 +1,6 @@
+/*
+Temporarily disabling as we transition to containerized PACS for E2E tests
+
 describe('Visual Regression - OHIF VTK Extension', () => {
   before(() => {
     cy.checkStudyRouteInViewer(
@@ -18,8 +21,8 @@ describe('Visual Regression - OHIF VTK Extension', () => {
     //Select 2D MPR button
     cy.get('[data-cy="2d mpr"]').click();
 
-    //Wait Reformatting Images
-    cy.waitVTKReformatting();
+    //Wait waitVTKLoading Images
+    cy.waitVTKLoading();
   });
 
   beforeEach(() => {
@@ -91,3 +94,4 @@ describe('Visual Regression - OHIF VTK Extension', () => {
     cy.percyCanvasSnapshot('VTK Rotate tool - Should rotate image');
   });
 });
+*/

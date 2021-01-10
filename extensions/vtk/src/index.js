@@ -1,12 +1,15 @@
-import asyncComponent from './asyncComponent.js';
+import React from 'react';
+import { asyncComponent, retryImport } from '@ohif/ui';
+
 import commandsModule from './commandsModule.js';
 import toolbarModule from './toolbarModule.js';
 import withCommandsManager from './withCommandsManager.js';
+import { version } from '../package.json';
 // This feels weird
 // import loadLocales from './loadLocales';
 
 const OHIFVTKViewport = asyncComponent(() =>
-  import(/* webpackChunkName: "OHIFVTKViewport" */ './OHIFVTKViewport.js')
+  retryImport(() => import(/* webpackChunkName: "OHIFVTKViewport" */ './OHIFVTKViewport.js'))
 );
 
 const vtkExtension = {
@@ -14,15 +17,20 @@ const vtkExtension = {
    * Only required property. Should be a unique value across all extensions.
    */
   id: 'vtk',
+  version,
 
-  getViewportModule({ commandsManager }) {
-    return withCommandsManager(OHIFVTKViewport, commandsManager);
+  getViewportModule({ commandsManager, servicesManager }) {
+    const ExtendedVTKViewport = props => (
+      <OHIFVTKViewport {...props} servicesManager={servicesManager} />
+    );
+    return withCommandsManager(ExtendedVTKViewport, commandsManager);
   },
   getToolbarModule() {
     return toolbarModule;
   },
-  getCommandsModule({ commandsManager }) {
-    return commandsModule({ commandsManager });
+  getCommandsModule({ commandsManager, servicesManager }) {
+    const { UINotificationService } = servicesManager.services;
+    return commandsModule({ commandsManager, UINotificationService });
   },
 };
 

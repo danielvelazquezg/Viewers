@@ -1,8 +1,8 @@
 window.config = {
   // default: '/'
-  routerBasename: '/dicomviewer/index.html',
+  routerBasename: '/',
   extensions: [],
-  showStudyList: false,
+  showStudyList: true,
   filterQueryParam: false,
   disableServersCache: false,
   servers: {
